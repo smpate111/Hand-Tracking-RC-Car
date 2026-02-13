@@ -26,9 +26,6 @@ class hand_to_command:
     
     # dummy function
     def _testing_(self):
-        print("qwe")
-        print("123")
-        print("321")
         return
     
     # determine the command based on which hand is active inside the hand box
