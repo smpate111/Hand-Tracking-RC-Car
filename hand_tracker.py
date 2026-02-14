@@ -34,29 +34,36 @@ class hand_detector:
         
         hands_data = []
         result = self.result
+        result_length = len(result.handedness)
 
-        for i in range(len(result.handedness)):
-            # extract detected hand and gesture
+        for i in range(result_length):
+            # extract the detected hand, gesture, and landmarks
             hand = result.handedness[i][0]
             gesture = result.gestures[i][0]
-
-            # extract basic information
-            name = hand.category_name
-            gesture_name = gesture.category_name
-            gesture_score = gesture.score
-
-            # extract the hand landmarks
-            landmarks = [[lm.x, lm.y] for lm in result.hand_landmarks[i]]
-
-            # store the information into a dictionary for easy access
-            hand_information = {
-                "hand_name": name,
-                "hand_gesture": gesture_name,
-                "hand_gesture_score": gesture_score,
-                "hand_landmarks": landmarks,
-                "display_test": f"{name} hand: ({gesture_name}) - Confidence: ({gesture_score:.2f})"
-            }
+            landmarks = result.hand_landmarks[i]
+            hand_information = self._extract_hand_information(hand, gesture, landmarks)
 
             hands_data.append(hand_information)
 
         return hands_data
+    
+    # helper function that extracts the current hand's information
+    def _extract_hand_information(self, hand, gesture, landmarks):
+        # extract basic information
+        name = hand.category_name
+        gesture_name = gesture.category_name
+        gesture_score = gesture.score
+
+        # extract the hand landmarks
+        landmarks = [[lm.x, lm.y] for lm in landmarks]
+
+        # store the information into a dictionary for easy access
+        hand_information = {
+            "hand_name": name,
+            "hand_gesture": gesture_name,
+            "hand_gesture_score": gesture_score,
+            "hand_landmarks": landmarks,
+            "display_test": f"{name} hand: ({gesture_name}) - Confidence: ({gesture_score:.2f})"
+        }
+
+        return hand_information

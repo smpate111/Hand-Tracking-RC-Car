@@ -28,7 +28,26 @@ HAND_LANDMARKS_CONNECTIONS = [
 
 # === BOX COORDINATES ===
 # define it here so that main.py and hand_visualizer.py can see them
-LEFT_BOX = {"x1": 40, "y1": 80, "x2": 270, "y2": 320}
+x1 = 40
+y1 = 80
+x2 = 270
+y2 = 320
+LEFT_BOX = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
+
+# the frame's size (change these values whenever the size changes)
+f_width = 640
+f_height = 480
+
+# change these to whatever values you want (these are set to mirror the left box)
+new_x1 = f_width - x2
+new_x2 = f_width - x1
+
+# define it here so that main.py and hand_visualizer.py can see them
+x1 = new_x1
+y1 = y1
+x2 = new_x2
+y2 = y2
+RIGHT_BOX = {"x1": x1, "y1": y1, "x2": x2, "y2": y2}
 # the right box is calculated dynamically in main.py/hand_visualizer.py based on frame width
 # can hardcode the right box here if the frame size is constant
 # =======================
