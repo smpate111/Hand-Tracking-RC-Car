@@ -4,7 +4,7 @@ import math
 # =================
 
 # tie hand gesture to a command to send to the arduino to perform an action
-class hand_to_command:
+class assign_command:
     def __init__(self, frame):
         # === FRAME VARIABLES ===
         self.f_height, self.f_width, self.f_channel = frame.shape
@@ -13,7 +13,7 @@ class hand_to_command:
         # === TIMING VARIABLES ===
         self.previous_motion = None
         self.last_start_time = 0.0
-        self.COMMAND_DELAY = 1.0    # seconds to hold before sending the command
+        self.COMMAND_DELAY = 2.0    # seconds to hold before sending the command
         # ========================
         return
     
@@ -24,12 +24,7 @@ class hand_to_command:
         if (hand_in_frame == False):
             return False
         
-        hand_in_box = self._is_hand_in_box(hand_landmarks, box)
-
-        if (hand_in_box == False):
-            return False
-        
-        return True
+        return self._is_hand_in_box(hand_landmarks, box)
     
 
     # helper function that checks if all hand landmarks are inside the given hand box
@@ -90,7 +85,7 @@ class hand_to_command:
             current_motion, current_speed = self._process_hand_gesture(current_motion, current_speed)
         
         # debug statement
-        print(f"{hand_name} Hand: Angle={angle_degrees:.0f} | PF={pf_extension} | Pinky={pinky_extension} | Cmd={current_motion}")
+        #print(f"{hand_name} Hand: Angle={angle_degrees:.0f} | PF={pf_extension} | Pinky={pinky_extension} | Cmd={current_motion}")
 
         return current_motion, current_speed
     
