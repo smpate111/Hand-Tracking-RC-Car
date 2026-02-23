@@ -17,6 +17,23 @@ def main():
     detector = hand_detector()
     COM_PORT = 'COM11'
     BAUD_RATE = 9600
+    commands = {
+        "FORWARD": b'Q',
+        "SLIGHT LEFT": b'W',
+        "LEFT": b'E',
+        "HARD LEFT": b'R',
+        "SLIGHT RIGHT": b'T',
+        "RIGHT": b'Y',
+        "HARD RIGHT": b'U',
+        "REVERSE": b'A',
+        "REVERSE SLIGHT LEFT": b'S',
+        "REVERSE LEFT": b'D',
+        "REVERSE HARD LEFT": b'F',
+        "REVERSE SLIGHT RIGHT": b'G',
+        "REVERSE RIGHT": b'H',
+        "REVERSE HARD RIGHT": b'J',
+        "IDLE": b'Z'
+    }
     # ======================
 
     # === ARDUINO SERIAL SETUP ===
@@ -117,72 +134,12 @@ def main():
             """
             if (left_hand_active == True):
                 print(f"Sending left hand command to Arduino: {left_motion}")
-
-                if (left_motion == "FORWARD"):
-                    arduino_command = b'Q'
-                elif (left_motion == "SLIGHT LEFT"):
-                    arduino_command = b'W'
-                elif (left_motion == "LEFT"):
-                    arduino_command = b'E'
-                elif (left_motion == "HARD LEFT"):
-                    arduino_command = b'R'
-                elif (left_motion == "SLIGHT RIGHT"):
-                    arduino_command = b'T'
-                elif (left_motion == "RIGHT"):
-                    arduino_command = b'Y'
-                elif (left_motion == "HARD RIGHT"):
-                    arduino_command = b'U'
-                elif (left_motion == "REVERSE"):
-                    arduino_command = b'A'
-                elif (left_motion == "REVERSE SLIGHT LEFT"):
-                    arduino_command = b'S'
-                elif (left_motion == "REVERSE LEFT"):
-                    arduino_command = b'D'
-                elif (left_motion == "REVERSE HARD LEFT"):
-                    arduino_command = b'F'
-                elif (left_motion == "REVERSE SLIGHT RIGHT"):
-                    arduino_command = b'G'
-                elif (left_motion == "REVERSE RIGHT"):
-                    arduino_command = b'H'
-                elif (left_motion == "REVERSE HARD RIGHT"):
-                    arduino_command = b'J'
-                elif (left_motion == "IDLE"):
-                    arduino_command = b'Z'
+                arduino_command = commands.get(left_motion)
             """
 
             if (right_hand_active == True):
                 print(f"Sending right hand command to Arduino: {right_motion}")
-
-                if (right_motion == "FORWARD"):
-                    arduino_command = b'Q'
-                elif (right_motion == "SLIGHT LEFT"):
-                    arduino_command = b'W'
-                elif (right_motion == "LEFT"):
-                    arduino_command = b'E'
-                elif (right_motion == "HARD LEFT"):
-                    arduino_command = b'R'
-                elif (right_motion == "SLIGHT RIGHT"):
-                    arduino_command = b'T'
-                elif (right_motion == "RIGHT"):
-                    arduino_command = b'Y'
-                elif (right_motion == "HARD RIGHT"):
-                    arduino_command = b'U'
-                elif (right_motion == "REVERSE"):
-                    arduino_command = b'A'
-                elif (right_motion == "REVERSE SLIGHT LEFT"):
-                    arduino_command = b'S'
-                elif (right_motion == "REVERSE LEFT"):
-                    arduino_command = b'D'
-                elif (right_motion == "REVERSE HARD LEFT"):
-                    arduino_command = b'F'
-                elif (right_motion == "REVERSE SLIGHT RIGHT"):
-                    arduino_command = b'G'
-                elif (right_motion == "REVERSE RIGHT"):
-                    arduino_command = b'H'
-                elif (right_motion == "REVERSE HARD RIGHT"):
-                    arduino_command = b'J'
-                elif (right_motion == "IDLE"):
-                    arduino_command = b'Z'
+                arduino_command = commands.get(right_motion)
             #"""
                 
             # send the command to the Arduino if it is a different command
