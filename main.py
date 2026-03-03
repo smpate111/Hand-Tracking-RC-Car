@@ -8,6 +8,7 @@ import hand_configurations
 from hand_tracker import hand_detector
 from render_frame import display_objects
 from process_command import assign_command
+from bluetooth_controller import BLE
 # =================
 
 def main():
@@ -15,8 +16,8 @@ def main():
     left_box = hand_configurations.LEFT_BOX
     right_box = hand_configurations.RIGHT_BOX
     detector = hand_detector()
-    COM_PORT = 'COM11'
-    BAUD_RATE = 9600
+    COM_PORT = 'COM14'
+    BAUD_RATE = 115200
     commands = {
         "FORWARD": b'Q',
         "SLIGHT LEFT": b'W',
@@ -37,14 +38,22 @@ def main():
     # ======================
 
     # === ARDUINO SERIAL SETUP ===
+    """
     try:
         arduino = serial.Serial(COM_PORT, BAUD_RATE, timeout=1)
         time.sleep(2)   # give the arduino a moment to reset after connecting
         print("Connected to Arduino...")
     except Exception as e:
-        print(f"Error: Could not connect to Arduino: {e}")
+        print(f"[Arduino Error] -- Could not connect to Arduino: {e}")
         return
+    """
     # ============================
+
+    # === BLUETOOTH CAR SETUP ===
+    print(f"[BLE] -- Initializing Bluetooth connection to ESP32 device...\n")
+    rc_car = BLE()
+    time.sleep(2)   # giving the background thread time to start scanning
+    # ===========================
 
     # set up last Arduino command
     last_arduino_command = b'Q'
@@ -52,7 +61,7 @@ def main():
     # === OPEN CAMERA ===
     camera = cv2.VideoCapture(0)
     if (not camera.isOpened()):
-        print("Error: Could not open camera.")
+        print(f"[Camera Error] -- Could not open camera.\n")
         return
     # ===================
 
@@ -62,7 +71,7 @@ def main():
         left_processor = assign_command(initial_frame)
         right_processor = assign_command(initial_frame)
     else:
-        print("Error: Could not read in the initial frame.")
+        print(f"[Camera Error] -- Could not read in the initial frame.\n")
         return
     # =============================
 
@@ -133,20 +142,23 @@ def main():
 
             """
             if (left_hand_active == True):
-                print(f"Sending left hand command to Arduino: {left_motion}")
+                print(f"[Hand Tracker] -- Sending left hand command to Arduino: {left_motion}")
                 arduino_command = commands.get(left_motion)
             """
 
             if (right_hand_active == True):
-                print(f"Sending right hand command to Arduino: {right_motion}")
+                print(f"[Hand Tracker] -- Sending right hand command to Arduino: {right_motion}")
                 arduino_command = commands.get(right_motion)
             #"""
                 
+            rc_car.send_command(arduino_command)
+
             # send the command to the Arduino if it is a different command
             if (arduino_command != last_arduino_command):
-                arduino.write(arduino_command)
+                #arduino.write(arduino_command)
+                
                 last_arduino_command = arduino_command
-                print(f"Sent to Arduino: {arduino_command.decode()}")
+                print(f"[Arduino] -- Command sent to Arduino: {arduino_command.decode()}")
 
             # === NOTE: comment out the hand that you don't need to track ===
             # === NOTE: flipped target hand due to frame being mirrored ===
@@ -172,6 +184,8 @@ def main():
         # exit the livestream and destroy all cv2 objects
         camera.release()
         cv2.destroyAllWindows()
+        rc_car.send_command(b'Z')
+        time.sleep(0.5)
     # ==========================
 
 if __name__ == '__main__':

@@ -13,7 +13,7 @@ class assign_command:
         # === TIMING VARIABLES ===
         self.previous_motion = None
         self.last_start_time = 0.0
-        self.COMMAND_DELAY = 2.0    # seconds to hold before sending the command
+        self.COMMAND_DELAY = 0.0    # seconds to hold before sending the command
         # ========================
         return
     
@@ -159,6 +159,7 @@ class assign_command:
 
     # helper function that validates the hand gesture command before sending it to the car
     def _process_hand_gesture(self, current_motion, current_speed):
+        
         current_time = time.time()
         final_motion = "IDLE"
         final_speed = 0.0
