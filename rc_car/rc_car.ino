@@ -11,6 +11,40 @@
 #define CHARACTERISTIC_UUID_TX "6E400003-B5A3-F393-E0A9-E50E24DCCA9E"
 // ==================
 
+// class that controls the ultrasonic distance sensor
+class ultrasonic_sensor {
+  private:
+    int trig_pin, echo_pin;
+    float distance;
+
+  public:
+    ultrasonic_sensor(int trig, int echo) : trig_pin(trig), echo_pin(echo) {}
+
+    void init() {
+      pinMode(trig_pin, OUTPUT);
+      pinMode(echo_pin, INPUT);
+    }
+
+    float calculate_distance() {
+      digitalWrite(trig_pin, LOW);
+      delayMicroseconds(2);
+
+      digitalWrite(trig_pin, HIGH);
+      delayMicroseconds(10);
+
+      digitalWrite(trig_pin, LOW);
+
+      long duration = pulseIn(echo_pin, HIGH, 30000);
+      distance = (duration * 0.034) / 2.0;
+
+      if (distance == 0) {
+        return 400.0;
+      }
+
+      return distance;
+    }
+};
+
 // class that controls the speed and direction of the motors
 class drive_controller {
   // === PRIVATE VARIABLES ===
@@ -53,13 +87,13 @@ class drive_controller {
     }*/
 
     // controls the motors by speed and direction
-    void drive(String command, int speed1, int speed2, int speed3, int speed4) {
+    void drive(String str_command, int speed1, int speed2, int speed3, int speed4) {
       analogWrite(in1, speed1);
       analogWrite(in2, speed2);
       analogWrite(in3, speed3);
       analogWrite(in4, speed4);
 
-      last_command = command;
+      last_command = str_command;
       return;
     }
 
@@ -83,142 +117,143 @@ class drive_controller {
 
     // specifies what to send to the drive function based on given command
     void execute_command(char command) {
-        // speed adjustment
-        if ((command >= '0') && (command <= '9')) {
-          int index = 9;
-          
-          if (command != '0') {
-            index = command - '1';
-          }
-
-          // current speed = minimum speed + (speed index * 31)
-          //current_speed = MINIMUM_SPEED + ((command - '1') * 31.0);
-          current_speed = MINIMUM_SPEED + (index * 17.22);
-          //display_speed(current_speed);
-          return;
+      // speed adjustment
+      if ((command >= '0') && (command <= '9')) {
+        int index = 9;
+        
+        if (command != '0') {
+          index = command - '1';
         }
 
-        // movement adjustment
-        switch (command) {
-          // === FORWARD MOVEMENTS ===
-          // FORWARD
-          case 'q':
-          case 'Q':
-            //display_command("FORWARD", 0, current_speed, 0, current_speed);
-            drive("FORWARD", 0, current_speed, 0, current_speed);
-            break;
+        // current speed = minimum speed + (speed index * 31)
+        //current_speed = MINIMUM_SPEED + ((command - '1') * 31.0);
+        current_speed = MINIMUM_SPEED + (index * 17.22);
+        //display_speed(current_speed);
+        return;
+      }
 
-          // SLIGHT LEFT
-          case 'w':
-          case 'W':
-            //display_command("SLIGHT LEFT", 0, current_speed * 0.75, 0, current_speed);
-            drive("SLIGHT LEFT", 0, current_speed * 0.75, 0, current_speed);
-            break;
+      // movement adjustment
+      switch (command) {
+        // === FORWARD MOVEMENTS ===
+        // FORWARD
+        case 'q':
+        case 'Q':
+          //display_command("FORWARD", 0, current_speed, 0, current_speed);
+          drive("FORWARD", 0, current_speed, 0, current_speed);
+          break;
 
-          // LEFT
-          case 'e':
-          case 'E':
-            //display_command("LEFT", 0, current_speed * 0.50, 0, current_speed);
-            drive("LEFT", 0, current_speed * 0.50, 0, current_speed);
-            break;
+        // SLIGHT LEFT
+        case 'w':
+        case 'W':
+          //display_command("SLIGHT LEFT", 0, current_speed * 0.75, 0, current_speed);
+          drive("SLIGHT LEFT", 0, current_speed * 0.75, 0, current_speed);
+          break;
 
-          // HARD LEFT
-          case 'r':
-          case 'R':
-            //display_command("HARD LEFT", 0, 0, 0, current_speed);
-            drive("HARD LEFT", 0, 0, 0, current_speed);
-            break;
+        // LEFT
+        case 'e':
+        case 'E':
+          //display_command("LEFT", 0, current_speed * 0.50, 0, current_speed);
+          drive("LEFT", 0, current_speed * 0.50, 0, current_speed);
+          break;
 
-          // SLIGHT RIGHT
-          case 't':
-          case 'T':
-            //display_command("SLIGHT RIGHT", 0, current_speed, 0, current_speed * 0.75);
-            drive("SLIGHT RIGHT", 0, current_speed, 0, current_speed * 0.75);
-            break;
+        // HARD LEFT
+        case 'r':
+        case 'R':
+          //display_command("HARD LEFT", 0, 0, 0, current_speed);
+          drive("HARD LEFT", 0, 0, 0, current_speed);
+          break;
 
-          // RIGHT
-          case 'y':
-          case 'Y':
-            //display_command("RIGHT", 0, current_speed, 0, current_speed * 0.50);
-            drive("RIGHT", 0, current_speed, 0, current_speed * 0.50);
-            break;
+        // SLIGHT RIGHT
+        case 't':
+        case 'T':
+          //display_command("SLIGHT RIGHT", 0, current_speed, 0, current_speed * 0.75);
+          drive("SLIGHT RIGHT", 0, current_speed, 0, current_speed * 0.75);
+          break;
 
-          // HARD RIGHT
-          case 'u':
-          case 'U':
-            //display_command("HARD RIGHT", 0, current_speed, 0, 0);
-            drive("HARD RIGHT", 0, current_speed, 0, 0);
-            break;
-          // =========================
+        // RIGHT
+        case 'y':
+        case 'Y':
+          //display_command("RIGHT", 0, current_speed, 0, current_speed * 0.50);
+          drive("RIGHT", 0, current_speed, 0, current_speed * 0.50);
+          break;
 
-          // === REVERSE MOVEMENTS ===
-          // REVERSE
-          case 'a':
-          case 'A':
-            //display_command("REVERSE", current_speed, 0, current_speed, 0);
-            drive("REVERSE", current_speed, 0, current_speed, 0);
-            break;
+        // HARD RIGHT
+        case 'u':
+        case 'U':
+          //display_command("HARD RIGHT", 0, current_speed, 0, 0);
+          drive("HARD RIGHT", 0, current_speed, 0, 0);
+          break;
+        // =========================
 
-          // REVERSE SLIGHT LEFT
-          case 's':
-          case 'S':
-            //display_command("REVERSE SLIGHT LEFT", current_speed * 0.75, 0, current_speed, 0);
-            drive("REVERSE SLIGHT LEFT", current_speed * 0.75, 0, current_speed, 0);
-            break;
+        // === REVERSE MOVEMENTS ===
+        // REVERSE
+        case 'a':
+        case 'A':
+          //display_command("REVERSE", current_speed, 0, current_speed, 0);
+          drive("REVERSE", current_speed, 0, current_speed, 0);
+          break;
 
-          // REVERSE LEFT
-          case 'd':
-          case 'D':
-            //display_command("REVERSE LEFT", current_speed * 0.50, 0, current_speed, 0);
-            drive("REVERSE LEFT", current_speed * 0.50, 0, current_speed, 0);
-            break;
+        // REVERSE SLIGHT LEFT
+        case 's':
+        case 'S':
+          //display_command("REVERSE SLIGHT LEFT", current_speed * 0.75, 0, current_speed, 0);
+          drive("REVERSE SLIGHT LEFT", current_speed * 0.75, 0, current_speed, 0);
+          break;
 
-          // REVERSE HARD LEFT
-          case 'f':
-          case 'F':
-            //display_command("REVERSE HARD LEFT", 0, 0, current_speed, 0);
-            drive("REVERSE HARD LEFT", 0, 0, current_speed, 0);
-            break;
+        // REVERSE LEFT
+        case 'd':
+        case 'D':
+          //display_command("REVERSE LEFT", current_speed * 0.50, 0, current_speed, 0);
+          drive("REVERSE LEFT", current_speed * 0.50, 0, current_speed, 0);
+          break;
 
-          // REVERSE SLIGHT RIGHT
-          case 'g':
-          case 'G':
-            //display_command("REVERSE SLIGHT RIGHT", current_speed, 0, current_speed * 0.75, 0);
-            drive("REVERSE SLIGHT RIGHT", current_speed, 0, current_speed * 0.75, 0);
-            break;
+        // REVERSE HARD LEFT
+        case 'f':
+        case 'F':
+          //display_command("REVERSE HARD LEFT", 0, 0, current_speed, 0);
+          drive("REVERSE HARD LEFT", 0, 0, current_speed, 0);
+          break;
 
-          // REVERSE RIGHT
-          case 'h':
-          case 'H':
-            //display_command("REVERSE RIGHT", current_speed, 0, current_speed * 0.50, 0);
-            drive("REVERSE RIGHT", current_speed, 0, current_speed * 0.50, 0);
-            break;
+        // REVERSE SLIGHT RIGHT
+        case 'g':
+        case 'G':
+          //display_command("REVERSE SLIGHT RIGHT", current_speed, 0, current_speed * 0.75, 0);
+          drive("REVERSE SLIGHT RIGHT", current_speed, 0, current_speed * 0.75, 0);
+          break;
 
-          // REVERSE HARD RIGHT
-          case 'j':
-          case 'J':
-            //display_command("REVERSE HARD RIGHT", current_speed, 0, 0, 0);
-            drive("REVERSE HARD RIGHT", current_speed, 0, 0, 0);
-            break;
-          // =========================
+        // REVERSE RIGHT
+        case 'h':
+        case 'H':
+          //display_command("REVERSE RIGHT", current_speed, 0, current_speed * 0.50, 0);
+          drive("REVERSE RIGHT", current_speed, 0, current_speed * 0.50, 0);
+          break;
 
-          // === IDLE ===
-          case 'z':
-          case 'Z':
-            //stop();
-            drive("IDLE", 0, 0, 0, 0);
-            break;
-          // ============
-        }
+        // REVERSE HARD RIGHT
+        case 'j':
+        case 'J':
+          //display_command("REVERSE HARD RIGHT", current_speed, 0, 0, 0);
+          drive("REVERSE HARD RIGHT", current_speed, 0, 0, 0);
+          break;
+        // =========================
+
+        // === IDLE ===
+        case 'z':
+        case 'Z':
+          //stop();
+          drive("IDLE", 0, 0, 0, 0);
+          break;
+        // ============
+      }
     }
 };
 
 // class that handles the bluetooth controller
 class ble_controller : public BLECharacteristicCallbacks, public BLEServerCallbacks{
   public:
-    char last_command = 'Z';
+    char current_command = 'Z';
     unsigned long last_command_time = 0;
     bool device_connected = false;
+    String incoming_buffer = "";
 
     void setup() {
       BLEDevice::init("ESP32-S3");
@@ -243,7 +278,8 @@ class ble_controller : public BLECharacteristicCallbacks, public BLEServerCallba
       String value = ble_character->getValue();
 
       if (value.length() > 0) {
-        last_command = value[0];
+        //current_command = value[0];
+        incoming_buffer = incoming_buffer + value;
         last_command_time = millis();
       }
 
@@ -268,7 +304,74 @@ class ble_controller : public BLECharacteristicCallbacks, public BLEServerCallba
 drive_controller car(4, 5, 16, 17);
 ble_controller ble;
 char last_processed_command = 'Z';
+ultrasonic_sensor front_sensor(9, 10);
 // ========================
+
+bool is_car_moving_forward(char command) {
+  bool forward_flag = false;
+  switch (command) {
+    // === FORWARD MOVEMENTS ===
+    // FORWARD
+    case 'q':
+    case 'Q':
+    // SLIGHT LEFT
+    case 'w':
+    case 'W':
+    // LEFT
+    case 'e':
+    case 'E':
+    // HARD LEFT
+    case 'r':
+    case 'R':
+    // SLIGHT RIGHT
+    case 't':
+    case 'T':
+    // RIGHT
+    case 'y':
+    case 'Y':
+    // HARD RIGHT
+    case 'u':
+    case 'U':
+      forward_flag = true;
+      break;
+    // =========================
+  }
+  return forward_flag;
+}
+
+bool is_car_moving_backward(char command) {
+  bool backward_flag = false;
+  
+  switch (command) {
+    // === REVERSE MOVEMENTS ===
+    // REVERSE
+    case 'a':
+    case 'A':
+    // REVERSE SLIGHT LEFT
+    case 's':
+    case 'S':
+    // REVERSE LEFT
+    case 'd':
+    case 'D':
+    // REVERSE HARD LEFT
+    case 'f':
+    case 'F':
+    // REVERSE SLIGHT RIGHT
+    case 'g':
+    case 'G':
+    // REVERSE RIGHT
+    case 'h':
+    case 'H':
+    // REVERSE HARD RIGHT
+    case 'j':
+    case 'J':
+      backward_flag = true;
+      break;
+    // =========================
+  }
+
+  return backward_flag;
+}
 
 void setup() {
   // put your setup code here, to run once:
@@ -281,21 +384,56 @@ void setup() {
 
   car.init();
   ble.setup();
+  front_sensor.init();
 }
 
 void loop() {
   // put your main code here, to run repeatedly:
+  if (ble.incoming_buffer.length() > 0) {
+    ble.current_command = ble.incoming_buffer[0];
+    ble.incoming_buffer.remove(0, 1);
+    ble.last_command_time = millis();
+  }
+
+  char current_cmd = ble.current_command;
+  bool forward_flag = is_car_moving_forward(current_cmd);
+  bool backward_flag = is_car_moving_backward(current_cmd);
+  bool currently_moving_forward = is_car_moving_forward(last_processed_command);
+  bool currently_moving_backward = is_car_moving_backward(last_processed_command);
+
+  if ((currently_moving_forward == true) && (backward_flag == true)) {
+    car.execute_command('Z');
+    delay(50);
+  }
+  else if ((currently_moving_backward == true) && (forward_flag == true)) {
+    car.execute_command('Z');
+    delay(50);
+  }
   
   // if no new command has been sent within a defined timeframe, then stop the car
-  if (millis() - ble.last_command_time > 500) {
-    ble.last_command = 'Z';
+  if ((millis() - ble.last_command_time > 500) && (ble.incoming_buffer.length() == 0)) {
+    ble.current_command = 'Z';
+    current_cmd = 'Z';
+  }
+
+  if (forward_flag == true) {
+    float front_distance = front_sensor.calculate_distance();
+
+    if (front_distance < 20.0) {
+      current_cmd = 'Z';
+      ble.current_command = 'Z';
+
+      if (ble.incoming_buffer.length() > 0) {
+        ble.incoming_buffer = "";
+      }
+    }
   }
 
   // execute the command if it is not the same as the previous command
-  if (ble.last_command != last_processed_command) {
-    car.execute_command(ble.last_command);
-    last_processed_command = ble.last_command;
+  if (current_cmd != last_processed_command) {
+    car.execute_command(current_cmd);
+    last_processed_command = ble.current_command;
   }
 
-  delay(10);
+  delay(100);
 }
