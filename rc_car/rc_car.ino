@@ -16,16 +16,34 @@ class ultrasonic_sensor {
   private:
     int trig_pin, echo_pin;
     float distance;
+    volatile unsigned long start_time = 0;
+    volatile unsigned long travel_time = 0;
+    static ultrasonic_sensor* instance;
+
+    // interrupt service routine that runs in the background ram
+    static void ARDUINO_ISR_ATTR echo_isr() {
+      if (digitalRead(instance->echo_pin) == HIGH) {
+        instance->start_time = micros();
+      }
+      else {
+        instance->travel_time = micros() - instance->start_time;
+      }
+      return;
+    }
 
   public:
-    ultrasonic_sensor(int trig, int echo) : trig_pin(trig), echo_pin(echo) {}
+    ultrasonic_sensor(int trig, int echo) : trig_pin(trig), echo_pin(echo) {
+      instance = this;
+    }
 
     void init() {
       pinMode(trig_pin, OUTPUT);
       pinMode(echo_pin, INPUT);
+      attachInterrupt(digitalPinToInterrupt(echo_pin), echo_isr, CHANGE);
+      return;
     }
 
-    float calculate_distance() {
+    void trigger_sensor() {
       digitalWrite(trig_pin, LOW);
       delayMicroseconds(2);
 
@@ -33,11 +51,17 @@ class ultrasonic_sensor {
       delayMicroseconds(10);
 
       digitalWrite(trig_pin, LOW);
+      return;
+    }
 
-      long duration = pulseIn(echo_pin, HIGH, 30000);
-      distance = (duration * 0.034) / 2.0;
+    float calculate_distance() {
+      if (travel_time == 0) {
+        return 400.0;
+      }
 
-      if (distance == 0) {
+      float distance = (travel_time * 0.034) / 2.0;
+      
+      if ((distance <= 0) || (distance > 400.0)) {
         return 400.0;
       }
 
@@ -301,10 +325,13 @@ class ble_controller : public BLECharacteristicCallbacks, public BLEServerCallba
 };
 
 // === GLOBAL INSTANCES ===
+ultrasonic_sensor* ultrasonic_sensor::instance = nullptr;
 drive_controller car(4, 5, 16, 17);
 ble_controller ble;
-char last_processed_command = 'Z';
 ultrasonic_sensor front_sensor(9, 10);
+char last_processed_command = 'Z';
+unsigned long last_ping_time = 0;
+const unsigned long PING_INTERVAL = 60;
 // ========================
 
 bool is_car_moving_forward(char command) {
@@ -398,6 +425,25 @@ void loop() {
   char current_cmd = ble.current_command;
   bool forward_flag = is_car_moving_forward(current_cmd);
   bool backward_flag = is_car_moving_backward(current_cmd);
+
+  if (forward_flag == true) {
+    if (millis() - last_ping_time >= PING_INTERVAL) {
+      front_sensor.trigger_sensor();
+      last_ping_time = millis();
+    }
+
+    float front_distance = front_sensor.calculate_distance();
+
+    if (front_distance < 20.0) {
+      current_cmd = 'Z';
+      ble.current_command = 'Z';
+
+      if (ble.incoming_buffer.length() > 0) {
+        ble.incoming_buffer = "";
+      }
+    }
+  }
+
   bool currently_moving_forward = is_car_moving_forward(last_processed_command);
   bool currently_moving_backward = is_car_moving_backward(last_processed_command);
 
@@ -416,24 +462,9 @@ void loop() {
     current_cmd = 'Z';
   }
 
-  if (forward_flag == true) {
-    float front_distance = front_sensor.calculate_distance();
-
-    if (front_distance < 20.0) {
-      current_cmd = 'Z';
-      ble.current_command = 'Z';
-
-      if (ble.incoming_buffer.length() > 0) {
-        ble.incoming_buffer = "";
-      }
-    }
-  }
-
   // execute the command if it is not the same as the previous command
   if (current_cmd != last_processed_command) {
     car.execute_command(current_cmd);
     last_processed_command = ble.current_command;
   }
-
-  delay(100);
 }
